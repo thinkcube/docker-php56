@@ -21,6 +21,8 @@ RUN sed -i 's/^\([^#]\)/#\1/g' /etc/httpd/conf.d/welcome.conf
 
 RUN sed -i "s|;date.timezone =|date.timezone = Asia/Colombo|" /etc/php.ini
 
+RUN sed -i "1ialias ls='ls --color'" /root/.bashrc
+
 COPY index.php /var/www/html/index.php
 
 VOLUME ["/etc/httpd/vhost.d", "/var/www/html", "/etc/httpd/conf", "/etc/httpd/conf.d"]
