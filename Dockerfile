@@ -6,6 +6,14 @@ RUN yum clean all
 
 WORKDIR /var/www/html
 
+RUN gpg --keyserver ha.pool.sks-keyservers.net --recv-keys BF357DD4
+
+RUN curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.9/gosu-amd64" \
+ && curl -o /usr/local/bin/gosu.asc -SL "https://github.com/tianon/gosu/releases/download/1.9/gosu-amd64.asc" \
+ && gpg --verify /usr/local/bin/gosu.asc \
+ && rm /usr/local/bin/gosu.asc \
+ && chmod 4755 /usr/local/bin/gosu
+
 RUN yum install epel-release http://rpms.remirepo.net/enterprise/remi-release-7.rpm -y && yum clean all
 
 RUN sed -i  "0,/enabled=0/{s/enabled=0/enabled=1/}" /etc/yum.repos.d/remi.repo
@@ -17,16 +25,24 @@ php-pear php-pecl-mongo php-pecl-mongodb composer vim wget git bash-completion &
 
 RUN echo "IncludeOptional vhost.d/*.conf" >> /etc/httpd/conf/httpd.conf
 
+RUN sed -i "s|User apache|User user|" /etc/httpd/conf/httpd.conf
+
+RUN sed -i "s|Group apache|Group user|" /etc/httpd/conf/httpd.conf
+
 RUN sed -i 's/^\([^#]\)/#\1/g' /etc/httpd/conf.d/welcome.conf
 
 RUN sed -i "s|;date.timezone =|date.timezone = Asia/Colombo|" /etc/php.ini
 
-RUN sed -i "1ialias ls='ls --color'" /root/.bashrc
+RUN sed -i "1ialias ls='ls --color'" /home/user/.bashrc
 
 COPY index.php /var/www/html/index.php
+
+RUN useradd --shell /bin/bash -u 1000 -o -c "" -m user
 
 VOLUME ["/etc/httpd/vhost.d", "/var/www/html", "/etc/httpd/conf", "/etc/httpd/conf.d"]
 
 EXPOSE 80
 
-CMD ["/sbin/httpd","-D","NO_DETACH"]
+COPY run.sh /run.sh
+
+CMD ["/run.sh"]
